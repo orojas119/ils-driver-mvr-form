@@ -1,0 +1,11 @@
+{
+  "name": "ils-driver-mvr-form-api",
+  "version": "0.1.0",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.1"
+  }
+}

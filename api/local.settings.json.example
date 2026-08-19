@@ -1,0 +1,16 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AZURE_AD_TENANT_ID": "8109e949-d281-46a4-af75-b18087925bf4",
+    "AZURE_AD_CLIENT_ID": "b0128bc3-7e7d-4e1a-b8d8-24a045b85e72",
+    "AZURE_AD_CLIENT_SECRET": "<iHelp Graph app client secret>",
+    "SP_SITE_ID": "ilsroyals.sharepoint.com,95f38ad3-ff96-41b9-a5dd-d0edc37faa03,94e53d43-5107-4380-8ae8-800fd0f1de0b",
+    "SP_DRIVERMVR_LIST_ID": "e44aaec2-9089-4498-810e-4819d0bd1b16",
+    "ALLOWED_ORIGINS": "http://localhost:8934,https://orojas119.github.io,https://drivermvr.ilsroyals.com"
+  },
+  "Host": {
+    "CORS": "*"
+  }
+}

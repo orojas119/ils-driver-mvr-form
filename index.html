@@ -329,7 +329,7 @@
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────
-const POWER_AUTOMATE_URL = "REPLACE_WITH_POWER_AUTOMATE_HTTP_TRIGGER_URL";
+const SUBMIT_URL = "https://func-drivermvr.azurewebsites.net/api/submit";
 
 const MSAL_CONFIG = {
   auth: {
@@ -670,9 +670,10 @@ async function submitForm() {
   btn.disabled = true; btn.classList.add('loading');
   document.getElementById('error-banner').classList.remove('show');
   try {
-    const res = await fetch(POWER_AUTOMATE_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const res = await fetch(SUBMIT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    showSuccess(drivers.length);
+    const result = await res.json();
+    showSuccess(result.driversCreated || drivers.length);
   } catch (err) {
     console.error(err);
     document.getElementById('error-banner').classList.add('show');
