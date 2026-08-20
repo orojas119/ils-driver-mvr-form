@@ -11,12 +11,16 @@ module.exports = {
     .filter(Boolean),
   // Gaston Arellano is the standing point of contact for every MVR request
   // (confirmed 2026-08-20) — fixed server-side so the client can't override it.
+  // Values match his real reference submission (GonzalezJ.pdf, 2026-08-20) exactly,
+  // not his own quick test of the form (which had placeholder values).
   FIXED_REQUEST_INFO: {
-    LocationName: "Immaculata La Salle",
-    Department: "Admin",
-    Address: "3601 S. Miami Ave",
-    ContactName: "Arellano, Gaston R",
-    ContactEmail: "garellano@ilsroyals.com",
-    Phone: "3058542334",
+    LocationName: "Immaculata-La Salle High School",
+    Department: "All school needs",
+    Address: "3601 S. Miami Avenue, Miami, FL 33133",
+    ContactName: "Gaston Arellano",
+    ContactEmail: "ops@ilsroyals.com",
+    Phone: "305-854-2334 ext2240",
+    CCContactName: "Sr. Kim Keraitis, FMA",
+    CCContactEmail: "principal@ilsroyals.com",
   },
 };

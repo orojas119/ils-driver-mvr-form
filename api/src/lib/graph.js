@@ -59,14 +59,12 @@ async function createDriverItem(fields) {
   return res.json();
 }
 
-// Uploads a driver's license photo/scan to the site's default document
-// library under /Driver MVR Licenses/, via an upload session (handles both
-// small and multi-MB phone-camera photos in one code path). Returns the
-// uploaded file's webUrl for storing on the list item.
-async function uploadLicenseFile(fileName, base64Content) {
-  const buffer = Buffer.from(base64Content, "base64");
-  const safeName = `${Date.now()}-${fileName}`.replace(/[^A-Za-z0-9.\-_ ]/g, "_");
-  const uploadPath = `/Driver MVR Licenses/${safeName}`;
+// Uploads a file to the site's default document library via an upload
+// session (handles both small and multi-MB files in one code path, e.g.
+// phone-camera photos or a multi-page PDF packet). Returns the uploaded
+// file's webUrl.
+async function uploadFileToDrive(folderName, fileName, buffer) {
+  const uploadPath = `/${folderName}/${fileName}`;
 
   const sessionRes = await graphFetch(
     `/sites/${SP_SITE_ID}/drive/root:${encodeURIComponent(uploadPath).replace(/%2F/g, "/")}:/createUploadSession`,
@@ -88,10 +86,24 @@ async function uploadLicenseFile(fileName, base64Content) {
   });
   if (!uploadRes.ok) {
     const body = await uploadRes.text();
-    throw new Error(`License upload failed: ${uploadRes.status} ${body}`);
+    throw new Error(`Upload to ${uploadPath} failed: ${uploadRes.status} ${body}`);
   }
   const uploaded = await uploadRes.json();
   return uploaded.webUrl;
 }
 
-module.exports = { createDriverItem, uploadLicenseFile };
+// Driver's raw license photo/scan, kept as a standalone file for quick access
+// from the list row independent of the combined packet.
+async function uploadLicenseFile(fileName, base64Content) {
+  const buffer = Buffer.from(base64Content, "base64");
+  const safeName = `${Date.now()}-${fileName}`.replace(/[^A-Za-z0-9.\-_ ]/g, "_");
+  return uploadFileToDrive("Driver MVR Licenses", safeName, buffer);
+}
+
+// The combined Approval + Authorization + license packet PDF, filed the same
+// way Gaston currently produces these by hand (see [[driver-mvr-form]] memory).
+async function uploadMvrPacket(fileName, pdfBytes) {
+  return uploadFileToDrive("MVR", fileName, Buffer.from(pdfBytes));
+}
+
+module.exports = { createDriverItem, uploadLicenseFile, uploadMvrPacket };

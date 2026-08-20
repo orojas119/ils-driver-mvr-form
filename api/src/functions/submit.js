@@ -1,6 +1,7 @@
 const { app } = require("@azure/functions");
 const { ALLOWED_ORIGINS, FIXED_REQUEST_INFO } = require("../lib/config");
-const { createDriverItem, uploadLicenseFile } = require("../lib/graph");
+const { createDriverItem, uploadLicenseFile, uploadMvrPacket } = require("../lib/graph");
+const { generateMvrPacket, packetFileName } = require("../lib/pdf");
 
 function corsHeaders(request) {
   const origin = request.headers.get("origin");
@@ -51,6 +52,15 @@ app.http("submitMvr", {
           licenseFileUrl = await uploadLicenseFile(d.licenseFileName, d.licenseFileBase64);
         }
 
+        const packetBytes = await generateMvrPacket({
+          requestInfo: FIXED_REQUEST_INFO,
+          dateOfRequest,
+          driver: d,
+          licenseFileName: d.licenseFileName,
+          licenseFileBase64: d.licenseFileBase64,
+        });
+        const mvrPacketUrl = await uploadMvrPacket(packetFileName(d.name), packetBytes);
+
         await createDriverItem({
           Title: d.name,
           ...FIXED_REQUEST_INFO,
@@ -66,6 +76,7 @@ app.http("submitMvr", {
           SignatureDate: d.signatureDate,
           MVRResult: "Pending",
           LicenseFileUrl: licenseFileUrl,
+          MVRPacketUrl: mvrPacketUrl,
         });
         created += 1;
       }
