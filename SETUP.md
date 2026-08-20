@@ -9,12 +9,19 @@ this was tried first but the SharePoint connector needs a one-time interactive O
 consent no matter how it's built, so a native Function (same pattern as
 `id-image-resizer`, `senior-ipad-swap`, `pictureday-id-lookup`) was used instead.
 
-**Gaston Arellano (garellano@ilsroyals.com) is the standing point of contact/location
-for every MVR request** (confirmed 2026-08-20 — he requested this tool be built). The
-form has no "Requestor" step: it's just Drivers → Review. Location/Department/Address/
-Contact/Phone are hardcoded server-side (`FIXED_REQUEST_INFO` in `api/src/lib/config.js`)
-so the client can't override them; the actual signed-in submitter (e.g. a coach) is
-still tracked separately via `SubmittedByName`/`SubmittedByEmail` columns.
+**Gaston Arellano is the standing point of contact/location for every MVR request**
+(confirmed 2026-08-20 — he requested this tool be built). The form has no "Requestor"
+step: it's just Drivers → Review. Location/Department/Address/Contact/Phone/CC-contact
+are hardcoded server-side (`FIXED_REQUEST_INFO` in `api/src/lib/config.js`, matching
+his real reference submission exactly — `ops@ilsroyals.com`, "All school needs", CC to
+Sr. Kim Keraitis/principal@ilsroyals.com) so the client can't override them; the actual
+signed-in submitter (e.g. a coach) is still tracked separately via
+`SubmittedByName`/`SubmittedByEmail` columns.
+
+**Each submission also generates a combined MVR packet PDF** (2026-08-20, per Gaston's
+request) — one PDF per driver containing the filled Request Approval Form page, the
+Authorization consent page, and the driver's license photo/scan appended, uploaded to
+an `MVR` folder in the site's document library. See "PDF packet generation" below.
 
 ## Provisioned
 
@@ -40,8 +47,9 @@ approved and enforced 2026-08-20).
   starts `Pending`, Gaston updates it directly in SharePoint after processing),
   `LicenseFileUrl` (text — link to the uploaded license photo/scan),
   `SubmittedByName`/`SubmittedByEmail` (text — the actual signed-in submitter, distinct
-  from the fixed `ContactName`/`ContactEmail`). `CCContactName`/`CCContactEmail` columns
-  still exist from the original design but are no longer populated (dead, harmless).
+  from the fixed `ContactName`/`ContactEmail`), `CCContactName`/`CCContactEmail` (now
+  populated from the fixed CC constant, not per-submission), `MVRPacketUrl` (text —
+  link to the combined packet PDF, see below).
 - Driver's license photos/scans are uploaded to the site's default document library
   under `/Driver MVR Licenses/` and linked via `LicenseFileUrl`, rather than stored as
   legacy list-item attachments (Graph v1.0 doesn't support those cleanly).
@@ -60,10 +68,31 @@ issued for this Function. Code lives in `api/`:
   over `drivers[]`, uploads any license file, creates one list item per driver with
   `FIXED_REQUEST_INFO` spread in plus a server-computed `DateOfRequest`.
 - `api/src/lib/graph.js` — app-only token (client-credentials, cached), `graphFetch`
-  with 429/503 retry, `uploadLicenseFile` (upload session — handles multi-MB
-  phone-camera photos), `createDriverItem`.
+  with 429/503 retry, `uploadFileToDrive` (upload session — handles multi-MB files),
+  used by both `uploadLicenseFile` and `uploadMvrPacket`, plus `createDriverItem`.
+- `api/src/lib/pdf.js` — `generateMvrPacket()` builds the combined packet with
+  `pdf-lib` (no headless browser/LibreOffice dependency — pages are drawn
+  programmatically to match the real forms' layout). `packetFileName()` derives
+  Gaston's naming convention (last name + first initial, e.g. `GonzalezJ.pdf`) from
+  the driver's typed name, handling both "Last, First" and "First Last" input.
+  Crest image lives at `api/assets/crest.jpeg` (bundled with the function deploy).
 - `api/src/lib/config.js` — env-based settings plus the hardcoded `FIXED_REQUEST_INFO`.
 - **CORS is platform-level** (`az functionapp cors add`), not in-code — see gotcha below.
+
+## PDF packet generation
+
+Per driver, `submit.js` now: uploads the raw license file (unchanged) → generates a
+combined PDF via `generateMvrPacket()` (Approval form page + Authorization page +
+license image/PDF appended) → uploads it to `/MVR/{LastName}{FirstInitial}.pdf` in the
+site's document library → stores that URL in `MVRPacketUrl` on the list item.
+
+`appendLicenseFile()` in `pdf.js` handles both cases the form's file input allows:
+a JPG/PNG gets embedded as an image page (scaled to fit, centered); an actual PDF
+upload gets its pages copied in directly via `PDFDocument.copyPages`.
+
+Verified end-to-end against production 2026-08-20 with a real image upload — packet
+downloaded from SharePoint afterward and its pages read back to confirm correct layout
+and no corruption; test data deleted afterward.
 
 ## Gotchas hit and fixed (2026-08-19/20)
 
