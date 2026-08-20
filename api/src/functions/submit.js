@@ -1,5 +1,5 @@
 const { app } = require("@azure/functions");
-const { ALLOWED_ORIGINS } = require("../lib/config");
+const { ALLOWED_ORIGINS, FIXED_REQUEST_INFO } = require("../lib/config");
 const { createDriverItem, uploadLicenseFile } = require("../lib/graph");
 
 function corsHeaders(request) {
@@ -14,7 +14,6 @@ function corsHeaders(request) {
   return headers;
 }
 
-const REQUEST_FIELDS = ["locationName", "department", "address", "contactName", "email", "phone", "dateOfRequest"];
 const DRIVER_FIELDS = ["name", "position", "state", "licenseNumber", "dateOfBirth", "signature", "signatureDate"];
 
 app.http("submitMvr", {
@@ -30,11 +29,6 @@ app.http("submitMvr", {
     try {
       const body = await request.json();
 
-      for (const f of REQUEST_FIELDS) {
-        if (!body[f] || !String(body[f]).trim()) {
-          return { status: 400, headers, jsonBody: { error: `Missing required field: ${f}` } };
-        }
-      }
       if (!Array.isArray(body.drivers) || body.drivers.length === 0) {
         return { status: 400, headers, jsonBody: { error: "At least one driver is required." } };
       }
@@ -49,6 +43,7 @@ app.http("submitMvr", {
         }
       }
 
+      const dateOfRequest = new Date().toISOString().slice(0, 10);
       let created = 0;
       for (const d of body.drivers) {
         let licenseFileUrl = "";
@@ -58,15 +53,10 @@ app.http("submitMvr", {
 
         await createDriverItem({
           Title: d.name,
-          LocationName: body.locationName,
-          Department: body.department,
-          Address: body.address,
-          ContactName: body.contactName,
-          ContactEmail: body.email,
-          Phone: body.phone,
-          DateOfRequest: body.dateOfRequest,
-          CCContactName: body.ccContactName || "",
-          CCContactEmail: body.ccContactEmail || "",
+          ...FIXED_REQUEST_INFO,
+          DateOfRequest: dateOfRequest,
+          SubmittedByName: body.submittedByName || "",
+          SubmittedByEmail: body.submittedByEmail || "",
           DriverName: d.name,
           Position: d.position,
           DriverState: d.state,

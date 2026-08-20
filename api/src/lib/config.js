@@ -9,4 +9,14 @@ module.exports = {
     .split(",")
     .map((o) => o.trim())
     .filter(Boolean),
+  // Gaston Arellano is the standing point of contact for every MVR request
+  // (confirmed 2026-08-20) — fixed server-side so the client can't override it.
+  FIXED_REQUEST_INFO: {
+    LocationName: "Immaculata La Salle",
+    Department: "Admin",
+    Address: "3601 S. Miami Ave",
+    ContactName: "Arellano, Gaston R",
+    ContactEmail: "garellano@ilsroyals.com",
+    Phone: "3058542334",
+  },
 };

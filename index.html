@@ -175,6 +175,8 @@
 
   /* Review */
   .review-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--gray-400); margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--gray-100); }
+  .filed-under-note { font-size: 13px; color: var(--gray-600); background: var(--navy-pale); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 4px; }
+  .filed-under-note strong { color: var(--navy); }
   .review-section-title:first-child { margin-top: 0; }
   .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
   @media (max-width: 500px) { .review-grid { grid-template-columns: 1fr; } }
@@ -246,64 +248,33 @@
   <main class="container">
     <div class="progress-wrap" id="progress-wrap">
       <div class="progress-steps">
-        <div class="step-pill active" id="spill-1"><div class="step-num">1</div><span class="step-label">Requestor</span></div>
-        <div class="step-pill" id="spill-2"><div class="step-num">2</div><span class="step-label">Drivers</span></div>
-        <div class="step-pill" id="spill-3"><div class="step-num">3</div><span class="step-label">Review</span></div>
+        <div class="step-pill active" id="spill-1"><div class="step-num">1</div><span class="step-label">Drivers</span></div>
+        <div class="step-pill" id="spill-2"><div class="step-num">2</div><span class="step-label">Review</span></div>
       </div>
     </div>
 
     <div class="error-banner" id="error-banner">⚠ There was an error submitting your request. Please try again or contact the Technology Department.</div>
 
-    <!-- STEP 1: REQUESTOR -->
+    <!-- STEP 1: DRIVERS -->
     <div class="form-step active" id="step-1">
-      <div class="card">
-        <div class="card-title"><span class="icon">📍</span> Requesting Location</div>
-        <div class="card-sub">Basic details about the location and contact requesting these MVR checks.</div>
-        <div class="field-row">
-          <div class="field" id="f-locationName"><label>Location Name <span class="req">*</span></label><input type="text" id="locationName" placeholder="e.g. Immaculata-La Salle High School"><span class="err-msg">Required</span></div>
-          <div class="field" id="f-department"><label>Department / Field Trip <span class="req">*</span></label><input type="text" id="department" placeholder="e.g. Athletics, Senior Retreat"><span class="err-msg">Required</span></div>
-        </div>
-        <div class="field-row single">
-          <div class="field" id="f-address"><label>Address <span class="req">*</span></label><input type="text" id="address" placeholder="Street, City, State, ZIP"><span class="err-msg">Required</span></div>
-        </div>
-        <div class="field-row">
-          <div class="field" id="f-contactName"><label>Contact Name <span class="req">*</span></label><input type="text" id="contactName" placeholder="Full name" readonly><span class="autofill-badge">✓ From Microsoft account</span><span class="err-msg">Required</span></div>
-          <div class="field" id="f-email"><label>Email <span class="req">*</span></label><input type="email" id="email" placeholder="you@ilsroyals.com" readonly><span class="autofill-badge">✓ From Microsoft account</span><span class="err-msg">Required</span></div>
-        </div>
-        <div class="field-row">
-          <div class="field" id="f-phone"><label>Phone No. <span class="req">*</span></label><input type="tel" id="phone" placeholder="(305) 555-0100"><span class="err-msg">Required</span></div>
-          <div class="field" id="f-dateOfRequest"><label>Date of Request <span class="req">*</span></label><input type="date" id="dateOfRequest"><span class="err-msg">Required</span></div>
-        </div>
-        <div class="divider"></div>
-        <div class="card-title" style="font-size:15px;"><span class="icon" style="width:26px;height:26px;font-size:13px;">✉️</span> Additional Contact <span class="hint" style="text-transform:none;font-weight:400;">— optional, to be CC'd with results</span></div>
-        <div class="field-row" style="margin-top:16px;">
-          <div class="field"><label>Contact Name</label><input type="text" id="ccContactName" placeholder="Optional"></div>
-          <div class="field"><label>Email</label><input type="email" id="ccContactEmail" placeholder="Optional"></div>
-        </div>
-        <div class="nav-row"><div></div><button class="btn btn-primary" onclick="goTo(2)">Next: Driver Information →</button></div>
-      </div>
-    </div>
-
-    <!-- STEP 2: DRIVERS -->
-    <div class="form-step" id="step-2">
       <div class="card">
         <div class="card-title"><span class="icon">🚗</span> Driver Information &amp; Authorization</div>
         <div class="card-sub">Add every driver who needs an MVR check. Each driver must review and agree to the authorization below.</div>
         <div id="drivers-list"></div>
         <button type="button" class="btn-add-driver" onclick="addDriver()">+ Add Another Driver</button>
         <div class="driver-limit-note">Up to 10 drivers per request.</div>
-        <div class="nav-row"><button class="btn btn-ghost" onclick="goTo(1)">← Back</button><button class="btn btn-primary" onclick="goTo(3)">Next: Review →</button></div>
+        <div class="nav-row"><div></div><button class="btn btn-primary" onclick="goTo(2)">Next: Review →</button></div>
       </div>
     </div>
 
-    <!-- STEP 3: REVIEW -->
-    <div class="form-step" id="step-3">
+    <!-- STEP 2: REVIEW -->
+    <div class="form-step" id="step-2">
       <div class="card">
         <div class="card-title"><span class="icon">✅</span> Review &amp; Submit</div>
         <div class="card-sub">Please review your MVR request before submitting.</div>
         <div id="review-content"></div>
         <div class="nav-row">
-          <button class="btn btn-ghost" onclick="goTo(2)">← Back</button>
+          <button class="btn btn-ghost" onclick="goTo(1)">← Back</button>
           <button class="btn btn-primary btn-submit" id="submit-btn" onclick="submitForm()">
             <div class="spinner" id="spinner"></div>
             <span class="btn-text">Submit MVR Request</span>
@@ -356,13 +327,15 @@ let msalInstance;
 let currentStep = 1;
 let driverCount = 0;
 const MAX_DRIVERS = 10;
+let submittedByName = '';
+let submittedByEmail = '';
 
 // ─── AUTH ─────────────────────────────────────────────────────────
 async function initAuth() {
   const isLocalhost = ['localhost','127.0.0.1'].includes(window.location.hostname);
   if (isLocalhost && window.location.search.includes('debug=1')) {
-    document.getElementById('contactName').value = 'Test User';
-    document.getElementById('email').value = 'test.user@ilsroyals.com';
+    submittedByName = 'Test User';
+    submittedByEmail = 'test.user@ilsroyals.com';
     document.getElementById('header-name').textContent = 'Test User';
     document.getElementById('header-email').textContent = 'test.user@ilsroyals.com';
     document.getElementById('header-avatar').textContent = 'TU';
@@ -417,8 +390,8 @@ async function loadUserAndShowApp(account) {
     const displayName = profile.displayName || account.name || '';
     const email = profile.mail || profile.userPrincipalName || account.username || '';
     const initials = displayName.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
-    document.getElementById('contactName').value = displayName;
-    document.getElementById('email').value = email;
+    submittedByName = displayName;
+    submittedByEmail = email;
     document.getElementById('header-name').textContent = displayName;
     document.getElementById('header-email').textContent = email;
     document.getElementById('header-avatar').textContent = initials;
@@ -449,7 +422,6 @@ function showApp() {
 
 // ─── FORM ─────────────────────────────────────────────────────────
 function initForm() {
-  document.getElementById('dateOfRequest').value = new Date().toISOString().slice(0,10);
   addDriver();
 }
 
@@ -561,13 +533,6 @@ function driverIds() {
 function validate(step) {
   let valid = true;
   if (step === 1) {
-    ['locationName','department','address','contactName','email','phone','dateOfRequest'].forEach(id => {
-      const el = document.getElementById(id), wrap = document.getElementById('f-'+id);
-      if (!el.value.trim()) { wrap.classList.add('has-error'); el.classList.add('error'); valid = false; }
-      else { wrap.classList.remove('has-error'); el.classList.remove('error'); }
-    });
-  }
-  if (step === 2) {
     driverIds().forEach(n => {
       ['name','position','license','dob','signature','sigdate'].forEach(f => {
         const el = document.getElementById(`d${n}-${f}`), wrap = document.getElementById(`f-d${n}-${f}`);
@@ -599,7 +564,7 @@ function goTo(step) {
   currentStep = step;
   document.getElementById('step-'+currentStep).classList.add('active');
   document.getElementById('spill-'+currentStep).classList.add('active');
-  if (step === 3) buildReview();
+  if (step === 2) buildReview();
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
@@ -620,22 +585,13 @@ function buildReview() {
     </div>`).join('');
 
   document.getElementById('review-content').innerHTML = `
-    <div class="review-section-title">Requesting Location</div>
-    <div class="review-grid">
-      <div class="review-item"><div class="ri-label">Location</div><div class="ri-value">${v('locationName')}</div></div>
-      <div class="review-item"><div class="ri-label">Department / Field Trip</div><div class="ri-value">${v('department')}</div></div>
-      <div class="review-item full"><div class="ri-label">Address</div><div class="ri-value">${v('address')}</div></div>
-      <div class="review-item"><div class="ri-label">Contact</div><div class="ri-value">${v('contactName')}</div></div>
-      <div class="review-item"><div class="ri-label">Email</div><div class="ri-value">${v('email')}</div></div>
-      <div class="review-item"><div class="ri-label">Phone</div><div class="ri-value">${v('phone')}</div></div>
-      <div class="review-item"><div class="ri-label">Date of Request</div><div class="ri-value">${v('dateOfRequest')}</div></div>
-    </div>
+    <div class="filed-under-note">Filed under <strong>Immaculata La Salle · Admin</strong>, contact <strong>Arellano, Gaston R</strong> · submitted by <strong>${submittedByName}</strong> (${submittedByEmail})</div>
     <div class="review-section-title">Driver(s) — ${ids.length}</div>
     ${driverCards}`;
 }
 
 async function submitForm() {
-  if (!validate(2)) { goTo(2); return; }
+  if (!validate(1)) { goTo(1); return; }
   const ids = driverIds();
   const drivers = ids.map(n => {
     const fileInput = document.getElementById(`d${n}-license-doc`);
@@ -654,15 +610,8 @@ async function submitForm() {
   });
 
   const payload = {
-    locationName: v('locationName'),
-    department: v('department'),
-    address: v('address'),
-    contactName: v('contactName'),
-    email: v('email'),
-    phone: v('phone'),
-    dateOfRequest: v('dateOfRequest'),
-    ccContactName: v('ccContactName'),
-    ccContactEmail: v('ccContactEmail'),
+    submittedByName,
+    submittedByEmail,
     drivers
   };
 
@@ -693,13 +642,11 @@ function showSuccess(count) {
 function resetForm() {
   document.getElementById('drivers-list').innerHTML = '';
   driverCount = 0;
-  ['locationName','department','address','phone','ccContactName','ccContactEmail'].forEach(id => { document.getElementById(id).value = ''; });
-  document.getElementById('dateOfRequest').value = new Date().toISOString().slice(0,10);
   document.getElementById('success-screen').style.display = 'none';
   document.getElementById('progress-wrap').style.display = '';
   document.querySelectorAll('.form-step').forEach(s => s.style.display = '');
   currentStep = 1;
-  for (let i=1; i<=3; i++) { document.getElementById('step-'+i).classList.remove('active'); document.getElementById('spill-'+i).classList.remove('active','done'); }
+  for (let i=1; i<=2; i++) { document.getElementById('step-'+i).classList.remove('active'); document.getElementById('spill-'+i).classList.remove('active','done'); }
   document.getElementById('step-1').classList.add('active');
   document.getElementById('spill-1').classList.add('active');
   document.getElementById('submit-btn').disabled = false;
