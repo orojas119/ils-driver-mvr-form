@@ -84,32 +84,52 @@ async function buildApprovalPage(pdfDoc, font, boldFont, crestImage, requestInfo
   drawLabelValue(page, font, boldFont, "Email:", requestInfo.CCContactEmail, 320, y);
 
   // Driver table
-  y -= 40;
+  y -= 30;
   const cols = [
-    { label: "Drivers' Name", width: 140 },
-    { label: "Classification", width: 118 },
-    { label: "State", width: 40 },
-    { label: "License No.", width: 114 },
-    { label: "Date of Birth", width: 100 },
+    { label: "Drivers' Name", width: 130 },
+    { label: "Classification", width: 100 },
+    { label: "State", width: 35 },
+    { label: "License No.", width: 100 },
+    { label: "Date of Birth", width: 87 },
+    { label: "Yes", width: 30 },
+    { label: "No", width: 30 },
   ];
+  const tableWidth = cols.reduce((sum, c) => sum + c.width, 0);
+
+  // "Pastoral Center Use Only" disclaimer sits above the Yes/No columns only.
+  const yesNoWidth = cols[cols.length - 2].width + cols[cols.length - 1].width;
+  const disclaimerX = marginX + tableWidth - yesNoWidth;
+  page.drawText("Pastoral Center", { x: disclaimerX, y: y + 10, size: 7, font: boldFont, color: rgb(0.7, 0, 0) });
+  page.drawText("Use Only", { x: disclaimerX, y: y + 1, size: 7, font: boldFont, color: rgb(0.7, 0, 0) });
+
   let cx = marginX;
-  const tableTop = y;
   const rowHeight = 22;
-  page.drawRectangle({ x: marginX, y: y - rowHeight, width: 612 - marginX * 2, height: rowHeight, color: NAVY });
+  page.drawRectangle({ x: marginX, y: y - rowHeight, width: tableWidth, height: rowHeight, color: NAVY });
   for (const col of cols) {
     page.drawText(col.label, { x: cx + 4, y: y - 15, size: 8.5, font: boldFont, color: rgb(1, 1, 1) });
     cx += col.width;
   }
   y -= rowHeight;
   page.drawRectangle({
-    x: marginX, y: y - rowHeight, width: 612 - marginX * 2, height: rowHeight,
+    x: marginX, y: y - rowHeight, width: tableWidth, height: rowHeight,
     borderColor: rgb(0.7, 0.7, 0.7), borderWidth: 0.5,
   });
   const values = [driver.name, driver.position, driver.state, driver.licenseNumber, driver.dateOfBirth];
   cx = marginX;
-  for (let i = 0; i < cols.length; i++) {
+  for (let i = 0; i < values.length; i++) {
     const cellText = truncateToWidth(values[i], font, 8.5, cols[i].width - 8);
     page.drawText(cellText, { x: cx + 4, y: y - 15, size: 8.5, font, color: BLACK });
+    cx += cols[i].width;
+  }
+  // Blank Yes/No checkboxes — left for Pastoral Center staff to mark by hand,
+  // matching the physical form; not tied to the SharePoint Approval Status field.
+  const boxSize = 10;
+  for (let i = 5; i < cols.length; i++) {
+    const boxX = cx + (cols[i].width - boxSize) / 2;
+    page.drawRectangle({
+      x: boxX, y: y - rowHeight / 2 - boxSize / 2 + 2, width: boxSize, height: boxSize,
+      borderColor: BLACK, borderWidth: 0.75,
+    });
     cx += cols[i].width;
   }
 
