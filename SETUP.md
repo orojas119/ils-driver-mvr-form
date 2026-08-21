@@ -43,8 +43,12 @@ approved and enforced 2026-08-20).
   contact fields). Columns: `Title`, `LocationName`, `Department`, `Address`,
   `ContactName`, `ContactEmail`, `Phone`, `DateOfRequest` (date, server-computed),
   `DriverName`, `Position`, `DriverState`, `LicenseNumber`, `DateOfBirth` (date),
-  `Signature`, `SignatureDate` (date), `MVRResult` (choice: Pending/Clear/Flagged —
-  starts `Pending`, Gaston updates it directly in SharePoint after processing),
+  `Signature`, `SignatureDate` (date), `MVRResult` — displayed in SharePoint as
+  **"Approval Status"** (choice: Pending/Approved/Declined, renamed 2026-08-20 per
+  legal/insurance feedback — this is the "clear record of final approval" of whether
+  Gaston has approved or declined the driver on behalf of ADOM, not just the raw MVR
+  check result; internal field name `MVRResult` unchanged so no code changes were
+  needed — starts `Pending`, Gaston sets it directly in SharePoint after reviewing),
   `LicenseFileUrl` (text — link to the uploaded license photo/scan),
   `SubmittedByName`/`SubmittedByEmail` (text — the actual signed-in submitter, distinct
   from the fixed `ContactName`/`ContactEmail`), `CCContactName`/`CCContactEmail` (now
