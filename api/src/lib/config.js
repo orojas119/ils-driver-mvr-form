@@ -1,5 +1,11 @@
 module.exports = {
   TENANT_ID: process.env.AZURE_AD_TENANT_ID,
+  // The MSAL sign-in app the static form authenticates against (ILS-DriverMVR-WebAuth).
+  WEBAUTH_CLIENT_ID: process.env.WEBAUTH_CLIENT_ID || "5a24683e-d5cd-406d-827b-74378c4acb35",
+  ALLOWED_DOMAIN: "ilsroyals.com",
+  // Uploaded license file: hard cap on decoded size. Accepted formats are
+  // whatever pdf.js can actually embed (pdf/jpg/png) — enforced by magic bytes.
+  MAX_LICENSE_FILE_BYTES: 10 * 1024 * 1024,
   GRAPH_CLIENT_ID: process.env.AZURE_AD_CLIENT_ID,
   GRAPH_CLIENT_SECRET: process.env.AZURE_AD_CLIENT_SECRET,
   SP_SITE_ID: process.env.SP_SITE_ID,

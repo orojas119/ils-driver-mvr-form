@@ -94,8 +94,7 @@ async function uploadFileToDrive(folderName, fileName, buffer) {
 
 // Driver's raw license photo/scan, kept as a standalone file for quick access
 // from the list row independent of the combined packet.
-async function uploadLicenseFile(fileName, base64Content) {
-  const buffer = Buffer.from(base64Content, "base64");
+async function uploadLicenseFile(fileName, buffer) {
   const safeName = `${Date.now()}-${fileName}`.replace(/[^A-Za-z0-9.\-_ ]/g, "_");
   return uploadFileToDrive("Driver MVR Licenses", safeName, buffer);
 }

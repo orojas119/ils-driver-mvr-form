@@ -1,5 +1,7 @@
 const { app } = require("@azure/functions");
 const { ALLOWED_ORIGINS, FIXED_REQUEST_INFO } = require("../lib/config");
+const { requireMember, AuthError } = require("../lib/auth");
+const { validateLicenseFile, UploadError } = require("../lib/uploadValidation");
 const { createDriverItem, uploadLicenseFile, uploadMvrPacket } = require("../lib/graph");
 const { generateMvrPacket, packetFileName } = require("../lib/pdf");
 
@@ -7,7 +9,7 @@ function corsHeaders(request) {
   const origin = request.headers.get("origin");
   const headers = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, x-app-access-token",
   };
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
     headers["Access-Control-Allow-Origin"] = origin;
@@ -16,6 +18,7 @@ function corsHeaders(request) {
 }
 
 const DRIVER_FIELDS = ["name", "position", "state", "licenseNumber", "dateOfBirth", "signature", "signatureDate"];
+const MAX_DRIVERS = 10;
 
 app.http("submitMvr", {
   methods: ["POST", "OPTIONS"],
@@ -27,12 +30,25 @@ app.http("submitMvr", {
       return { status: 204, headers };
     }
 
+    let user;
+    try {
+      user = await requireMember(request);
+    } catch (e) {
+      if (e instanceof AuthError) return { status: e.status, headers, jsonBody: { error: e.message } };
+      throw e;
+    }
+
     try {
       const body = await request.json();
 
       if (!Array.isArray(body.drivers) || body.drivers.length === 0) {
         return { status: 400, headers, jsonBody: { error: "At least one driver is required." } };
       }
+      if (body.drivers.length > MAX_DRIVERS) {
+        return { status: 400, headers, jsonBody: { error: `At most ${MAX_DRIVERS} drivers per request.` } };
+      }
+
+      const validated = [];
       for (const d of body.drivers) {
         for (const f of DRIVER_FIELDS) {
           if (!d[f] || !String(d[f]).trim()) {
@@ -42,22 +58,32 @@ app.http("submitMvr", {
         if (!d.consentAgreed) {
           return { status: 400, headers, jsonBody: { error: `Driver ${d.name} has not agreed to the authorization.` } };
         }
+        let license = null;
+        if (d.licenseFileBase64) {
+          try {
+            license = validateLicenseFile(d.licenseFileName, d.licenseFileBase64);
+          } catch (e) {
+            if (e instanceof UploadError) return { status: 400, headers, jsonBody: { error: `Driver ${d.name}: ${e.message}` } };
+            throw e;
+          }
+        }
+        validated.push({ driver: d, license });
       }
 
       const dateOfRequest = new Date().toISOString().slice(0, 10);
       let created = 0;
-      for (const d of body.drivers) {
+      for (const { driver: d, license } of validated) {
         let licenseFileUrl = "";
-        if (d.licenseFileBase64 && d.licenseFileName) {
-          licenseFileUrl = await uploadLicenseFile(d.licenseFileName, d.licenseFileBase64);
+        if (license) {
+          licenseFileUrl = await uploadLicenseFile(license.safeFileName, license.buffer);
         }
 
         const packetBytes = await generateMvrPacket({
           requestInfo: FIXED_REQUEST_INFO,
           dateOfRequest,
           driver: d,
-          licenseFileName: d.licenseFileName,
-          licenseFileBase64: d.licenseFileBase64,
+          licenseFileName: license ? license.safeFileName : "",
+          licenseFileBase64: license ? license.buffer.toString("base64") : "",
         });
         const mvrPacketUrl = await uploadMvrPacket(packetFileName(d.name), packetBytes);
 
@@ -65,8 +91,8 @@ app.http("submitMvr", {
           Title: d.name,
           ...FIXED_REQUEST_INFO,
           DateOfRequest: dateOfRequest,
-          SubmittedByName: body.submittedByName || "",
-          SubmittedByEmail: body.submittedByEmail || "",
+          SubmittedByName: user.name || user.email,
+          SubmittedByEmail: user.email,
           DriverName: d.name,
           Position: d.position,
           DriverState: d.state,
@@ -84,7 +110,7 @@ app.http("submitMvr", {
       return { status: 200, headers, jsonBody: { success: true, driversCreated: created } };
     } catch (e) {
       context.error(e);
-      return { status: 500, headers, jsonBody: { error: e.message || "Unexpected server error." } };
+      return { status: 500, headers, jsonBody: { error: "Unexpected server error." } };
     }
   },
 });

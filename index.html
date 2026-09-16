@@ -312,8 +312,10 @@ const MSAL_CONFIG = {
   cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: true }
 };
 
-const LOGIN_REQUEST = { scopes: ["openid", "profile", "email", "User.Read"] };
+const API_SCOPE = "api://5a24683e-d5cd-406d-827b-74378c4acb35/access_as_user";
+const LOGIN_REQUEST = { scopes: ["openid", "profile", "email", "User.Read", API_SCOPE] };
 const GRAPH_REQUEST  = { scopes: ["User.Read"] };
+const API_REQUEST    = { scopes: [API_SCOPE] };
 
 const CONSENT_TEXT = `
   <p>I understand that driving a company vehicle (or my own vehicle, as required) is a requirement of the position I am being considered for and that having and maintaining a satisfactory driving record is a condition of my employment. I agree to allow the Archdiocese of Miami to check my driving record prior to hire and to check it periodically thereafter. I further agree to report to my supervisor immediately any license suspensions, serious accidents or offenses, or any other condition that may affect my ability to drive an Archdiocese of Miami vehicle (or my own vehicle, if I am required to drive it) after I am hired.</p>
@@ -405,6 +407,19 @@ async function signOut() {
   try {
     await msalInstance.logoutRedirect({ postLogoutRedirectUri: window.location.origin + window.location.pathname });
   } catch(e) { console.error(e); }
+}
+
+async function getApiToken() {
+  if (!msalInstance) throw new Error('Not signed in (debug mode cannot submit — the API requires a real token)');
+  const account = msalInstance.getAllAccounts()[0];
+  if (!account) throw new Error('Not signed in');
+  try {
+    return (await msalInstance.acquireTokenSilent({ ...API_REQUEST, account })).accessToken;
+  } catch (err) {
+    // Silent refresh failed (expired session / consent needed) — full-page redirect, no popup.
+    await msalInstance.acquireTokenRedirect(API_REQUEST);
+    throw err;
+  }
 }
 
 function showLoginScreen() {
@@ -609,17 +624,19 @@ async function submitForm() {
     };
   });
 
-  const payload = {
-    submittedByName,
-    submittedByEmail,
-    drivers
-  };
+  // Submitter identity is taken from the verified token server-side, not from the body.
+  const payload = { drivers };
 
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.classList.add('loading');
   document.getElementById('error-banner').classList.remove('show');
   try {
-    const res = await fetch(SUBMIT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const accessToken = await getApiToken();
+    const res = await fetch(SUBMIT_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'x-app-access-token': accessToken },
+      body: JSON.stringify(payload)
+    });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const result = await res.json();
     showSuccess(result.driversCreated || drivers.length);
